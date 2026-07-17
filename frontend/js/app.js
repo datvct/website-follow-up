@@ -81,6 +81,8 @@ async function reloadAll() {
   fillCustomerDatalist(ALL_CUSTOMERS);
   applyListFilters();
   refreshDashboard();
+  if (typeof renderCustomerTable === 'function') renderCustomerTable();
+  if (typeof initTomSelect === 'function') initTomSelect();
   if (!document.getElementById('tab-reports').classList.contains('d-none')) renderCurrentReport();
 }
 

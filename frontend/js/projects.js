@@ -9,6 +9,25 @@ document.getElementById('form-add-project').addEventListener('submit', async (e)
   e.preventDefault();
   const form = Object.fromEntries(new FormData(e.target).entries());
   
+  // Gom chung thành 1 trường customerName tùy theo phân loại
+  form.customerName = (form.customerType === 'Khách cũ') ? form.customerNameOld : form.customerNameNew;
+  delete form.customerNameOld;
+  delete form.customerNameNew;
+  
+  // KIỂM TRA CHÍNH TẢ KHÁCH HÀNG CŨ (Mặc dù Tom Select đã chặn rồi nhưng cứ phòng hờ)
+  if (form.customerType === 'Khách cũ') {
+    if (!form.customerName) {
+      toast('Vui lòng chọn khách hàng cũ từ danh sách!', 'danger');
+      return;
+    }
+    const found = ALL_CUSTOMERS.find(c => String(c.customerName).trim().toLowerCase() === form.customerName.trim().toLowerCase());
+    if (!found) {
+      toast('Vui lòng chọn đúng khách hàng có sẵn từ danh sách, hoặc đổi phân loại thành "Khách mới"!', 'danger');
+      return;
+    }
+    form.customerName = found.customerName;
+  }
+  
   // Lọc bỏ dấu chấm phân tách hàng nghìn trước khi gửi lên API
   if (form.amount) {
     form.amount = form.amount.replace(/\./g, '');
@@ -205,29 +224,70 @@ document.getElementById('btn-delete-project').addEventListener('click', async ()
   }
 });
 
-// Tự động phân loại Khách mới / Khách cũ và tự động điền SĐT/Email của khách hàng có sẵn
-const customerNameInput = document.getElementById('input-customer-name');
-if (customerNameInput) {
-  customerNameInput.addEventListener('input', (e) => {
-    const val = e.target.value.trim().toLowerCase();
-    const customerTypeSelect = document.querySelector('#form-add-project [name="customerType"]');
-    const phoneInput = document.querySelector('#form-add-project [name="customerPhone"]');
-    const emailInput = document.querySelector('#form-add-project [name="customerEmail"]');
+// ============================================================
+// TOM SELECT: SELECT SEARCH KHÁCH HÀNG CŨ
+// ============================================================
+let tomSelectInstance = null;
+
+function initTomSelect() {
+  const selectOld = document.getElementById('select-old-customer');
+  if (!selectOld) return;
+  
+  if (tomSelectInstance) {
+    tomSelectInstance.destroy();
+  }
+  
+  // Nạp options vào select
+  selectOld.innerHTML = '<option value="">Chọn khách hàng...</option>';
+  (ALL_CUSTOMERS || []).forEach(c => {
+    if (!c.customerName) return;
+    const opt = document.createElement('option');
+    opt.value = c.customerName;
+    opt.textContent = c.customerName;
+    selectOld.appendChild(opt);
+  });
+  
+  if (typeof TomSelect !== 'undefined') {
+    tomSelectInstance = new TomSelect('#select-old-customer', {
+      create: false,
+      sortField: { field: 'text', direction: 'asc' },
+      placeholder: 'Gõ để tìm kiếm khách hàng...'
+    });
     
-    if (!val) {
-      if (customerTypeSelect && FORM_OPTIONS) customerTypeSelect.value = FORM_OPTIONS.customerType[0];
-      return;
-    }
-    
-    // Tìm kiếm khách hàng trong danh sách
-    const found = ALL_CUSTOMERS.find(c => String(c.customerName).trim().toLowerCase() === val);
-    if (found) {
-      if (customerTypeSelect) customerTypeSelect.value = 'Khách cũ';
-      // Tự động điền số điện thoại và email của khách hàng cũ
-      if (phoneInput && !phoneInput.value) phoneInput.value = found.phone || '';
-      if (emailInput && !emailInput.value) emailInput.value = found.email || '';
+    // Tự động điền SĐT/Email khi chọn
+    tomSelectInstance.on('change', (val) => {
+      const found = ALL_CUSTOMERS.find(c => String(c.customerName).trim().toLowerCase() === String(val).trim().toLowerCase());
+      if (found) {
+        const phoneInput = document.querySelector('#form-add-project [name="customerPhone"]');
+        const emailInput = document.querySelector('#form-add-project [name="customerEmail"]');
+        if (phoneInput && !phoneInput.value) phoneInput.value = found.phone || '';
+        if (emailInput && !emailInput.value) emailInput.value = found.email || '';
+      }
+    });
+  }
+}
+
+// Xử lý giao diện chọn Khách cũ / Khách mới
+const customerTypeSelect = document.getElementById('select-customer-type');
+const wrapperOld = document.getElementById('wrapper-customer-old');
+const wrapperNew = document.getElementById('wrapper-customer-new');
+const inputNew = document.getElementById('input-customer-new');
+
+if (customerTypeSelect && wrapperOld && wrapperNew) {
+  customerTypeSelect.addEventListener('change', () => {
+    if (customerTypeSelect.value === 'Khách cũ') {
+      wrapperOld.style.display = 'block';
+      wrapperNew.style.display = 'none';
+      inputNew.removeAttribute('required');
+      if (!tomSelectInstance) initTomSelect();
     } else {
-      if (customerTypeSelect) customerTypeSelect.value = 'Khách mới';
+      wrapperOld.style.display = 'none';
+      wrapperNew.style.display = 'block';
+      inputNew.setAttribute('required', 'true');
+      
+      // Xoá sđt/email cũ nếu chuyển sang khách mới
+      document.querySelector('#form-add-project [name="customerPhone"]').value = '';
+      document.querySelector('#form-add-project [name="customerEmail"]').value = '';
     }
   });
 }

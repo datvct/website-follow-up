@@ -776,6 +776,19 @@ body {
 /* ============================================================
    REPORTS
    ============================================================ */
+#report-list-box {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+#report-list-box::-webkit-scrollbar {
+  width: 5px;
+}
+#report-list-box::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
 .report-row {
   display: flex;
   justify-content: space-between;
