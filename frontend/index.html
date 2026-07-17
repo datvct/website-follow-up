@@ -174,11 +174,20 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Tên khách hàng/công ty</label>
-                  <input type="text" class="form-control" name="customerName" placeholder="VD: Công ty ABC" required>
+                  <input type="text" class="form-control" name="customerName" id="input-customer-name" list="customer-datalist" placeholder="Nhập hoặc chọn khách hàng..." required>
+                  <datalist id="customer-datalist"></datalist>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Phân loại khách hàng</label>
                   <select class="form-select" name="customerType" required></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Số điện thoại khách hàng (Tuỳ chọn)</label>
+                  <input type="text" class="form-control" name="customerPhone" placeholder="VD: 0367939867">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email khách hàng (Tuỳ chọn)</label>
+                  <input type="email" class="form-control" name="customerEmail" placeholder="VD: contact@epcb.vn">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">File/sản phẩm báo giá (Link Drive)</label>
@@ -256,6 +265,7 @@
           <section id="tab-reports" class="tab-panel d-none">
             <div class="segmented mb-3" id="report-switch">
               <button class="seg-btn active" data-report="sales">Theo Sales</button>
+              <button class="seg-btn" data-report="customer">Theo Khách hàng</button>
               <button class="seg-btn" data-report="day">Theo ngày</button>
               <button class="seg-btn" data-report="week">Theo tuần</button>
               <button class="seg-btn" data-report="month">Theo tháng</button>

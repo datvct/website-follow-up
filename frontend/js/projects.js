@@ -204,3 +204,30 @@ document.getElementById('btn-delete-project').addEventListener('click', async ()
     showLoading(false);
   }
 });
+
+// Tự động phân loại Khách mới / Khách cũ và tự động điền SĐT/Email của khách hàng có sẵn
+const customerNameInput = document.getElementById('input-customer-name');
+if (customerNameInput) {
+  customerNameInput.addEventListener('input', (e) => {
+    const val = e.target.value.trim().toLowerCase();
+    const customerTypeSelect = document.querySelector('#form-add-project [name="customerType"]');
+    const phoneInput = document.querySelector('#form-add-project [name="customerPhone"]');
+    const emailInput = document.querySelector('#form-add-project [name="customerEmail"]');
+    
+    if (!val) {
+      if (customerTypeSelect && FORM_OPTIONS) customerTypeSelect.value = FORM_OPTIONS.customerType[0];
+      return;
+    }
+    
+    // Tìm kiếm khách hàng trong danh sách
+    const found = ALL_CUSTOMERS.find(c => String(c.customerName).trim().toLowerCase() === val);
+    if (found) {
+      if (customerTypeSelect) customerTypeSelect.value = 'Khách cũ';
+      // Tự động điền số điện thoại và email của khách hàng cũ
+      if (phoneInput && !phoneInput.value) phoneInput.value = found.phone || '';
+      if (emailInput && !emailInput.value) emailInput.value = found.email || '';
+    } else {
+      if (customerTypeSelect) customerTypeSelect.value = 'Khách mới';
+    }
+  });
+}

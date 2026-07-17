@@ -125,3 +125,7 @@ function groupBySales(rows) {
 function lastBuckets(groups, n) {
   return groups.slice(-n);
 }
+
+function groupByCustomer(rows) {
+  return groupRowsBy_(rows, function (r) { return r.customerName || ''; });
+}

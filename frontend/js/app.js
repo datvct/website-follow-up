@@ -3,6 +3,20 @@
 
 let FORM_OPTIONS = null;
 let _autoRefreshTimer = null;
+let ALL_CUSTOMERS = [];
+
+function fillCustomerDatalist(customers) {
+  const dl = document.getElementById('customer-datalist');
+  if (!dl) return;
+  dl.innerHTML = '';
+  // Gom nhóm danh sách khách hàng để tránh trùng lặp hiển thị gợi ý
+  const uniqueNames = [...new Set(customers.map(c => c.customerName).filter(Boolean))];
+  uniqueNames.forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    dl.appendChild(opt);
+  });
+}
 
 const TAB_TITLES = {
   dashboard: 'Tổng quan',
@@ -63,6 +77,8 @@ function fillSelect(select, options, placeholder) {
 // (Không gọi 2-3 API riêng lẻ như trước — giảm số lần JSONP round-trip.)
 async function reloadAll() {
   ALL_PROJECTS = await callApi('getProjects');
+  ALL_CUSTOMERS = await callApi('getCustomers').catch(() => []);
+  fillCustomerDatalist(ALL_CUSTOMERS);
   applyListFilters();
   refreshDashboard();
   if (!document.getElementById('tab-reports').classList.contains('d-none')) renderCurrentReport();
@@ -162,6 +178,8 @@ async function init() {
     document.querySelector('[name="quoteDate"]').value = new Date().toISOString().slice(0, 10);
 
     ALL_PROJECTS = await callApi('getProjects');
+    ALL_CUSTOMERS = await callApi('getCustomers').catch(() => []);
+    fillCustomerDatalist(ALL_CUSTOMERS);
     applyListFilters();
     refreshDashboard();
 
