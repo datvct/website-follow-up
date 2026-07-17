@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản lý báo giá &amp; follow up</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@3.21.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+  <!-- MÀN HÌNH NHẬP MẬT KHẨU — chặn trước khi gọi bất kỳ API nào -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">
+        <img src="assets/logo.png" alt="EPCB Logo">
+      </div>
+      <div class="login-title">Quản lý báo giá &amp; follow up</div>
+      <p class="text-muted small mb-3">Nhập mật khẩu truy cập được cấp bởi quản trị viên.</p>
+      <div class="login-input-wrap">
+        <i class="ti ti-lock"></i>
+        <input type="password" id="login-password" class="form-control" placeholder="Mật khẩu">
+      </div>
+      <button id="login-submit" class="btn btn-brand w-100 mt-3"><i class="ti ti-login"></i> Vào hệ thống</button>
+      <div id="login-error" class="text-danger small mt-2 d-none"><i class="ti ti-alert-circle"></i> Sai mật khẩu, vui lòng thử lại.</div>
+    </div>
+  </div>
+
+  <div id="loading-overlay" class="loading-overlay d-none">
+    <div class="spinner-border" role="status"></div>
+    <div class="mt-3 loading-text">Đang tải dữ liệu...</div>
+  </div>
+
+  <div id="app-root" class="d-none">
+    <div class="app-shell">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-logo">
+            <img src="assets/logo.png" alt="EPCB Logo">
+          </div>
+          <div class="brand-text">
+            <div class="brand-title">EPCB Dashboard</div>
+            <div class="brand-sub">Quản lý báo giá &amp; follow up</div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav" id="main-tabs">
+          <button class="side-link active" data-tab="dashboard"><i class="ti ti-layout-dashboard"></i><span>Tổng quan</span></button>
+          <button class="side-link" data-tab="list"><i class="ti ti-list-details"></i><span>Danh sách &amp; follow up</span></button>
+          <button class="side-link" data-tab="add"><i class="ti ti-plus"></i><span>Thêm báo giá</span></button>
+          <button class="side-link" data-tab="reports"><i class="ti ti-report"></i><span>Báo cáo</span></button>
+          <button class="side-link" data-tab="probability"><i class="ti ti-percentage"></i><span>Xác suất chốt</span></button>
+        </nav>
+
+        <div class="sidebar-foot">
+          <button class="btn btn-sidebar-logout w-100" id="btn-logout"><i class="ti ti-logout"></i> <span>Đăng xuất</span></button>
+        </div>
+      </aside>
+      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+      <!-- MAIN -->
+      <div class="main-wrap">
+        <header class="topbar">
+          <button class="btn btn-icon d-lg-none" id="btn-menu-toggle"><i class="ti ti-menu-2"></i></button>
+          <div class="topbar-title" id="page-title">Tổng quan</div>
+          <div class="topbar-spacer"></div>
+          <button class="btn btn-icon" id="btn-refresh-all" title="Làm mới dữ liệu"><i class="ti ti-refresh"></i></button>
+          <button class="btn btn-icon btn-bell" id="btn-notifications" title="Nhắc nhở follow up">
+            <i class="ti ti-bell-ringing"></i>
+            <span class="notif-badge d-none" id="notif-badge">0</span>
+          </button>
+        </header>
+
+        <main class="content-area">
+
+          <!-- TAB: DASHBOARD -->
+          <section id="tab-dashboard" class="tab-panel">
+
+            <div class="period-bar">
+              <div class="period-label"><i class="ti ti-calendar-stats"></i> Xem số liệu theo</div>
+              <div class="segmented" id="period-switch">
+                <button class="seg-btn" data-period="today">Ngày</button>
+                <button class="seg-btn active" data-period="week">Tuần</button>
+                <button class="seg-btn" data-period="month">Tháng</button>
+                <button class="seg-btn" data-period="all">Tất cả</button>
+              </div>
+              <div class="period-range text-muted small" id="period-range-label"></div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-6 col-md-3">
+                <div class="kpi-card kpi-blue">
+                  <div class="kpi-icon"><i class="ti ti-target-arrow"></i></div>
+                  <div class="kpi-label">Tổng giá trị cơ hội</div>
+                  <div class="kpi-value" id="kpi-total">–</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="kpi-card kpi-teal">
+                  <div class="kpi-icon"><i class="ti ti-hourglass"></i></div>
+                  <div class="kpi-label">Doanh thu kỳ vọng</div>
+                  <div class="kpi-value" id="kpi-expected">–</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="kpi-card kpi-green">
+                  <div class="kpi-icon"><i class="ti ti-rosette-discount-check"></i></div>
+                  <div class="kpi-label">Doanh thu đã chốt</div>
+                  <div class="kpi-value" id="kpi-closed">–</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="kpi-card kpi-amber">
+                  <div class="kpi-icon"><i class="ti ti-percentage"></i></div>
+                  <div class="kpi-label">Tỷ lệ chốt</div>
+                  <div class="kpi-value" id="kpi-rate">–</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-lg-7">
+                <div class="panel h-100">
+                  <div class="panel-title">
+                    <span><i class="ti ti-bell-ringing"></i> Cần follow up</span>
+                    <span class="badge-count" id="reminder-count-badge">0</span>
+                  </div>
+                  <div class="reminder-tabs" id="reminder-tabs">
+                    <button class="rtab active" data-filter="urgent">Quá hạn &amp; sắp tới hạn</button>
+                    <button class="rtab" data-filter="all">Tất cả đang theo dõi</button>
+                  </div>
+                  <div id="reminder-list" class="reminder-list"></div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-5">
+                <div class="panel h-100">
+                  <div class="panel-title"><i class="ti ti-chart-pie"></i> Trạng thái dự án</div>
+                  <canvas id="chart-status" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="panel">
+                  <div class="panel-title"><i class="ti ti-trending-up"></i> Doanh thu theo <span id="trend-unit-label">tuần</span></div>
+                  <canvas id="chart-trend" height="90"></canvas>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- TAB: THÊM BÁO GIÁ -->
+          <section id="tab-add" class="tab-panel d-none">
+            <div class="panel form-panel">
+              <div class="panel-title"><i class="ti ti-file-plus"></i> Thêm báo giá mới</div>
+              <p class="text-muted small mb-3">Cột "Tuần", "Follow up", "Xác suất chốt" và "Doanh thu kỳ vọng" hệ thống tự tính, bạn không cần nhập.</p>
+              <form id="form-add-project" class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Ngày báo giá</label>
+                  <input type="date" class="form-control" name="quoteDate" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Nguồn OA/Salework</label>
+                  <select class="form-select" name="source" required></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tên khách hàng/công ty</label>
+                  <input type="text" class="form-control" name="customerName" placeholder="VD: Công ty ABC" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Phân loại khách hàng</label>
+                  <select class="form-select" name="customerType" required></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">File/sản phẩm báo giá (Link Drive)</label>
+                  <input type="text" class="form-control" name="productFile" placeholder="VD: https://drive.google.com/file/...">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Giá trị đơn (VNĐ)</label>
+                  <input type="text" class="form-control" name="amount" placeholder="VD: 10.000.000" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Trạng thái hiện tại</label>
+                  <select class="form-select" name="currentStatus" required></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Ngày follow up tiếp theo</label>
+                  <input type="date" class="form-control" name="nextFollowUpDate">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Phân loại khách hàng 2</label>
+                  <input type="text" class="form-control" name="customerType2" placeholder="VD: khu vực / ngành / độ ưu tiên">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Sales phụ trách</label>
+                  <input type="text" class="form-control" name="sales" placeholder="VD: Long" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Ghi chú</label>
+                  <textarea class="form-control" name="note" rows="2" placeholder="VD: Khách chưa phản hồi"></textarea>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-brand w-100"><i class="ti ti-check"></i> Lưu báo giá</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <!-- TAB: DANH SÁCH & FOLLOW UP -->
+          <section id="tab-list" class="tab-panel d-none">
+            <div class="panel">
+              <div class="list-toolbar flex-column flex-md-row align-items-start align-items-md-center">
+                <div class="panel-title mb-2 mb-md-0"><i class="ti ti-list-details"></i> Danh sách báo giá</div>
+                <div class="list-toolbar-actions d-flex flex-wrap gap-2 align-items-center w-100 w-md-auto justify-content-md-end">
+                  <div class="segmented" id="list-period-filter-segmented">
+                    <button type="button" class="seg-btn" data-period="all">Tất cả</button>
+                    <button type="button" class="seg-btn" data-period="today">Hôm nay</button>
+                    <button type="button" class="seg-btn active" data-period="week">Tuần này</button>
+                    <button type="button" class="seg-btn" data-period="month">Tháng này</button>
+                  </div>
+                  <input type="text" id="search-box" class="form-control form-control-sm" placeholder="Tìm theo tên khách hàng...">
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover" id="project-table">
+                  <thead>
+                    <tr>
+                      <th>Khách hàng</th>
+                      <th>Sales</th>
+                      <th>Giá trị đơn</th>
+                      <th>Trạng thái</th>
+                      <th>Xác suất</th>
+                      <th>Doanh thu kỳ vọng</th>
+                      <th>Follow up</th>
+                      <th>Ngày follow up</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="project-tbody"></tbody>
+                </table>
+              </div>
+              <div class="text-muted small mt-2" id="list-count-label"></div>
+            </div>
+          </section>
+
+          <!-- TAB: BÁO CÁO -->
+          <section id="tab-reports" class="tab-panel d-none">
+            <div class="segmented mb-3" id="report-switch">
+              <button class="seg-btn active" data-report="sales">Theo Sales</button>
+              <button class="seg-btn" data-report="day">Theo ngày</button>
+              <button class="seg-btn" data-report="week">Theo tuần</button>
+              <button class="seg-btn" data-report="month">Theo tháng</button>
+            </div>
+            <div class="row g-3">
+              <div class="col-12 col-lg-5">
+                <div class="panel">
+                  <div class="panel-title"><span id="report-list-title"><i class="ti ti-users"></i> Theo sales phụ trách</span></div>
+                  <div id="report-list-box"></div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-7">
+                <div class="panel">
+                  <div class="panel-title"><i class="ti ti-chart-bar"></i> Biểu đồ doanh thu</div>
+                  <canvas id="chart-report" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- TAB: ĐIỀU CHỈNH XÁC SUẤT -->
+          <section id="tab-probability" class="tab-panel d-none">
+            <div class="panel form-panel">
+              <div class="panel-title"><i class="ti ti-percentage"></i> Điều chỉnh tỉ lệ xác suất chốt</div>
+              <p class="text-muted small mb-4">Các giá trị này được dùng để tính toán doanh thu kỳ vọng tự động theo trạng thái của báo giá.</p>
+              <form id="form-probability-mapping">
+                <div class="table-responsive mb-4">
+                  <table class="table align-middle">
+                    <thead>
+                      <tr>
+                        <th>Trạng thái</th>
+                        <th style="width: 140px;">Xác suất (%)</th>
+                        <th>Ghi chú giải thích</th>
+                      </tr>
+                    </thead>
+                    <tbody id="probability-tbody">
+                      <tr>
+                        <td colspan="3" class="text-center text-muted py-4">Đang tải cấu hình xác suất...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-brand w-100"><i class="ti ti-device-floppy"></i> Lưu tỉ lệ xác suất</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CẬP NHẬT TRẠNG THÁI / FOLLOW UP -->
+  <div class="modal fade" id="update-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti ti-refresh"></i> Cập nhật báo giá</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="form-update-project">
+          <div class="modal-body row g-3">
+            <input type="hidden" name="projectId">
+            <div class="col-12 d-flex justify-content-between align-items-center follow-up-box">
+              <div>
+                <div class="text-muted small">Đã follow up</div>
+                <div class="fw-bold fs-5"><span id="update-followup-count">0</span> lần</div>
+              </div>
+              <button type="button" class="btn btn-amber btn-sm" id="btn-mark-followup">
+                <i class="ti ti-phone-outgoing"></i> Đã follow up (+1)
+              </button>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Trạng thái hiện tại</label>
+              <select class="form-select" name="currentStatus" id="update-current-status"></select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Trạng thái cuối (chỉ điền khi đơn đã kết thúc)</label>
+              <select class="form-select" name="finalStatus" id="update-final-status"></select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ngày follow up tiếp theo</label>
+              <input type="date" class="form-control" name="nextFollowUpDate">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ghi chú</label>
+              <textarea class="form-control" name="note" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+            <button type="button" class="btn btn-outline-danger me-auto" id="btn-delete-project"><i class="ti ti-trash"></i> Xoá</button>
+            <button type="submit" class="btn btn-brand"><i class="ti ti-check"></i> Lưu thay đổi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/periods.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/projects.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/probability.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
