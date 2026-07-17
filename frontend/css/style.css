@@ -625,8 +625,12 @@ body {
 .status-Tiềm-năng { background: var(--blue-light); color: var(--blue); }
 .status-Đang-báo-giá { background: #f0fdf4; color: #166534; }
 .status-Đang-đàm-phán { background: var(--amber-light); color: var(--amber); }
+.status-Chờ-đặt-cọc { background: #fef08a; color: #854d0e; }
 .status-Đã-đặt-cọc { background: #ecfeff; color: #0891b2; }
+.status-Chờ-thanh-toán { background: #e0e7ff; color: #3730a3; }
 .status-Đã-mua-hàng { background: var(--accent-light); color: var(--accent-dark); }
+.status-Dự-án { background: #f3e8ff; color: #6b21a8; }
+.status-Không-còn-nhu-cầu { background: var(--red-light); color: var(--red); }
 .status-Không-chốt { background: var(--red-light); color: var(--red); }
 .status-Tạm-hoãn { background: #f1f5f9; color: var(--muted); }
 
