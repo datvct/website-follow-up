@@ -21,6 +21,7 @@ function fillCustomerDatalist(customers) {
 const TAB_TITLES = {
   dashboard: 'Tổng quan',
   list: 'Danh sách & follow up',
+  customers: 'Khách hàng',
   add: 'Thêm báo giá',
   reports: 'Báo cáo',
   probability: 'Xác suất chốt'
@@ -97,6 +98,7 @@ function switchToTab(tabName) {
   closeMobileSidebar();
   if (tabName === 'reports') renderCurrentReport();
   if (tabName === 'probability') loadProbabilityTab();
+  if (tabName === 'customers' && typeof renderCustomerTable === 'function') renderCustomerTable();
 }
 
 document.getElementById('main-tabs').addEventListener('click', (e) => {

@@ -86,6 +86,18 @@ function renderCustomerTable() {
   });
 }
 
+function openUpdateCustomerModal(id) {
+  const c = ALL_CUSTOMERS.find(x => String(x.customerId) === String(id));
+  if (!c) return;
+  const form = document.getElementById('form-update-customer');
+  if (!form) return;
+  form.customerId.value = c.customerId || '';
+  form.customerName.value = c.customerName || '';
+  form.phone.value = c.phone || '';
+  form.email.value = c.email || '';
+  modalUpdateCustomer.show();
+}
+
 function formatDateVN(iso) {
   if (!iso) return '';
   const d = new Date(iso);

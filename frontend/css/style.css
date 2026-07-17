@@ -89,7 +89,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px;
+  /* padding: 5px; */
   flex-shrink: 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
